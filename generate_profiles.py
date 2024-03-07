@@ -21,8 +21,19 @@ def main():
     lydian = dict(list())
     locrian = dict(list())
 
+    flat_map = {
+            "C-": "B",
+            "D-": "C#",
+            "E-": "D#",
+            "F-": "E",
+            "G-": "F#",
+            "A-": "G#",
+            "B-": "A#"
+        }
     for center in CENTERS:
-        # scales
+        
+
+        # All modes for a given note
         maj_scale = [str(note)[:-1] for note in scale.MajorScale(center).getPitches()]
         min_scale = [str(note)[:-1] for note in scale.MinorScale(center).getPitches()]
         mixo_scale = [str(note)[:-1] for note in scale.MixolydianScale(center).getPitches()]
@@ -30,6 +41,23 @@ def main():
         phrygian_scale = [str(note)[:-1] for note in scale.PhrygianScale(center).getPitches()]
         lydian_scale = [str(note)[:-1] for note in scale.LydianScale(center).getPitches()]
         locrian_scale = [str(note)[:-1] for note in scale.LocrianScale(center).getPitches()]
+
+        scales = [
+            maj_scale,
+            min_scale,
+            mixo_scale,
+            dorian_scale,
+            phrygian_scale,
+            lydian_scale,
+            locrian_scale
+        ]
+
+        # normalizing scales so that flats appear as sharps
+        for s in scales:
+            for i, note in enumerate(s):
+                if note in flat_map:
+                    s[i] = flat_map[note]
+
 
         # generating corresponding profiles
         major_profile = profile_generator(maj_scale)

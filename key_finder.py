@@ -1,61 +1,48 @@
-import scipy.io.wavfile as wav
-from scipy.fft import fft, fftfreq
-from scipy.signal import find_peaks
-from librosa import hz_to_note
+import matplotlib.pyplot as plt
+import numpy as np
 from librosa.feature import chroma_stft
 from pprint import pprint
+import librosa
+import json
 
-def notes_played(song):
-    sample_rate, audio_data = wav.read(song)
-
-    # if we have stereo input
-    if len(audio_data.shape) == 2:
-        # pick out only one channel
-        audio_data = audio_data[:, 0]
-
-    
-    # Perform Fourier Transform
-    # Note: Contains complex numbers representing the frequency components
-    fft_result = fft(audio_data)
-
-    # Calculate Frequencies
-    fft_freq = fftfreq(len(audio_data), d=1/sample_rate)
-
-    # Isolating positive frequencies
-    # Note: only first half of values are unique/positive
-    n = len(fft_freq) - 1
-    abs_fft_result = abs(fft_result)**2
-    pos_fft_freq = fft_freq[:n // 2]
-    pos_fft_result = abs_fft_result[:n // 2]
-
-    # Note: Distance between note frequencies becomes smaller in the lower ranges
-    # https://mixbutton.com/mixing-articles/music-note-to-frequency-chart/
-    peaks, _ = find_peaks(pos_fft_result, prominence=5e13, distance=30)
-    note_frequencies = pos_fft_freq[peaks]
-    
-    # Converting frequencies to notes
-    notes = hz_to_note(note_frequencies)
-
-    return notes
-
-def musical_key(notes):
+def musical_key(chromagram, mode='major'):
     # use chromograms and short time fourier transform
-    ...
+    chroma_matrix = np.matrix(chromagram).T
+    path = f"key_profiles/{mode}.json"
 
+    with open(path) as f:
+        scales = json.load(f)
+        similarities = {}
+        for key in scales:
+            profile = np.matrix(scales[key]).T
+            score = np.mean(chroma_matrix * profile)
+            similarities[key] = score
 
+    sorted_similarties = sorted(similarities.items(), key=lambda x: x[1])
+    sorted_array = np.array(sorted_similarties)
+
+    notes  = sorted_array[:, 0]
+    scores = sorted_array[:, 1].astype(float)
+
+    plt.bar(notes, scores)
+    plt.title(f"Similarity Scores for {mode.capitalize()} Scales")
+    plt.xlabel(f"{mode.capitalize()} Scales")
+    plt.ylabel("Score")
+
+    return max(similarities.items(), key=lambda item: item[1])
 
 def main():
-    # song path
-    song = "wav_songs/re-plus - Pulse.wav"
-    chord = 'chords/CMajMelody1.wav'
-    notes = notes_played(chord)
-    print(notes)
+    y, sr = librosa.load("wav_songs/Satie - Gymnopédie No 1 Modified.wav")
+    chromagram = chroma_stft(y=y, sr=sr)
+    key = musical_key(chromagram, mode='major')
+    print(f'Key: {key}')
 
-    chromagram = chroma_stft(notes)
-    pprint(chromagram)
-
-
+    # Visualize the chromagram (optional)
+    plt.figure(figsize=(10, 5))
+    librosa.display.specshow(chromagram, x_axis="time", y_axis="chroma", cmap="viridis", hop_length=1536)
+    plt.title("Chromagram")
+    plt.colorbar(format="%.2f")
+    plt.show()
 
 if __name__ == '__main__':
     main()
-

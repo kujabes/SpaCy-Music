@@ -21,7 +21,7 @@ def musical_key(chromagram, mode='major'):
     sorted_similarties = sorted(similarities.items(), key=lambda x: x[1])
     sorted_array = np.array(sorted_similarties)
 
-    notes = sorted_array[:, 0]
+    notes  = sorted_array[:, 0]
     scores = sorted_array[:, 1].astype(float)
 
     plt.bar(notes, scores)
@@ -32,11 +32,10 @@ def musical_key(chromagram, mode='major'):
     return max(similarities.items(), key=lambda item: item[1])
 
 def main():
-    y, sr = librosa.load("wav_songs/JS Bach - Prelude in C Major Modified.wav")
+    y, sr = librosa.load("wav_songs/Satie - Gymnopédie No 1 Modified.wav")
     chromagram = chroma_stft(y=y, sr=sr)
     key = musical_key(chromagram, mode='major')
-    print(key)
-
+    print(f'Key: {key}')
 
     # Visualize the chromagram (optional)
     plt.figure(figsize=(10, 5))
@@ -45,7 +44,5 @@ def main():
     plt.colorbar(format="%.2f")
     plt.show()
 
-
 if __name__ == '__main__':
     main()
-
